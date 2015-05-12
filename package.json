@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "elliptic": "^3.0.3",
+    "fnv-plus": "^1.2.12"
+  },
+  "devDependencies": {
+    "mocha": "^2.2.4"
+  }
+}
