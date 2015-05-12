@@ -1,5 +1,5 @@
 # quic
-A QUIC client implementation.
+A QUIC (Quick UDP Internet Connections) client implementation.
 
 ```
 $ node index.js
