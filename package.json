@@ -1,7 +1,8 @@
 {
   "dependencies": {
     "elliptic": "^3.0.3",
-    "fnv-plus": "^1.2.12"
+    "fnv-plus": "^1.2.12",
+    "hpack": "^1.0.0"
   },
   "devDependencies": {
     "mocha": "^2.2.4"
