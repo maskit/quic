@@ -1,7 +1,7 @@
 var url = require('url');
 var http = require('http');
 var dgram = require('dgram');
-var QuicSession = require('./QuicSession');
+var QuicSession = require('./lib/QuicSession');
 
 
 function getAltProtocols (url, callback) {
