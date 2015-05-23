@@ -1,7 +1,8 @@
-var url = require('url');
+var urlUtil = require('url');
 var http = require('http');
 var dgram = require('dgram');
 var QuicSession = require('./lib/QuicSession');
+var Http2Quic= require('./h2q.js');
 
 
 function getAltProtocols (url, callback) {
@@ -38,22 +39,7 @@ function getQuicPort(protocols) {
     }
 }
 
-var target = 'http://www.google.com/';
-// var target = 'http://localhost/';
-getAltProtocols(target, function (err, protocols) {
-    var host, port;
-    if (err) {
-        host = url.parse(target).hostname;
-        port = 6121;
-    } else {
-        host = url.parse(target).hostname;
-        port = getQuicPort(protocols);
-    }
-
-    var qSession = new QuicSession({
-        'host': host,
-        'port': port,
-    });
+function addEventListeners(qSession) {
     qSession.on('error', function (e) {
         console.log(e);
     });
@@ -80,4 +66,40 @@ getAltProtocols(target, function (err, protocols) {
     qSession.connection.on('negotiated', function (version) {
         console.log('## QUIC Version negotiated: ' + version);
     });
-});
+}
+
+var request = 'http://www.google.com/';
+var target = 'http://www.google.com/';
+// var target = 'quic://localhost:6121/';
+
+var url = urlUtil.parse(target);
+var qSession = null;
+var h2q = null;
+
+if (url.protocol === 'quic:') {
+    qSession = new QuicSession({
+        'host': url.hostname,
+        'port': url.port,
+    });
+    addEventListeners(qSession);
+    h2q = new Http2Quic(qSession);
+    h2q.get(request);
+} else {
+    getAltProtocols(target, function (err, protocols) {
+        if (err) {
+            throw new Error("The target doesn't provide alternate protocols");
+        }
+        var host = url.hostname;
+        var port = getQuicPort(protocols);
+        if (!port) {
+            throw new Error("The target doesn't support QUIC");
+        }
+        qSession = new QuicSession({
+            'host': host,
+            'port': port,
+        });
+        addEventListeners(qSession);
+        h2q = new Http2Quic(qSession);
+        h2q.get(request);
+    });
+}
