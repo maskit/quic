@@ -1,6 +1,5 @@
 var urlUtil = require('url');
 var http = require('http');
-var dgram = require('dgram');
 var QuicSession = require('./lib/QuicSession');
 var Http2Quic= require('./h2q.js');
 
