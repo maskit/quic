@@ -1,5 +1,6 @@
 var urlUtil = require('url');
-var http = require('http');
+var https = require('https');
+var fs = require('fs');
 var QuicSession = require('./lib/QuicSession');
 var Http2Quic= require('./h2q.js');
 
@@ -7,7 +8,7 @@ var Http2Quic= require('./h2q.js');
 function getAltProtocols (url, callback) {
     var protocols = {} ;
 
-    http.get(url ,function (res) {
+    https.get(url ,function (res) {
         var altProtocols = res.headers['alternate-protocol'];
         altProtocols.split(', ').forEach(function (range, i) {
             var protocol = '', parameters = '';
@@ -68,21 +69,34 @@ function addEventListeners(qSession) {
 }
 
 var request = 'http://www.google.com/';
-var target = 'http://www.google.com/';
+var target = 'https://www.google.com/';
 // var target = 'quic://localhost:6121/';
 
 var url = urlUtil.parse(target);
 var qSession = null;
 var h2q = null;
 
-if (url.protocol === 'quic:') {
-    qSession = new QuicSession({
-        'host': url.hostname,
-        'port': url.port,
+function doRequest (host, port) {
+    var options;
+    try {
+        options = JSON.parse(fs.readFileSync('quic.session'));
+        if (options.host !== host || options.port !== port) {
+            options = { 'host': host, 'port': port };
+        }
+    } catch (e) {
+        options = { 'host': host, 'port': port };
+    }
+    qSession = new QuicSession(options);
+    qSession.on('established', function () {
+        fs.writeFile('quic.session', JSON.stringify(qSession.options));
     });
     addEventListeners(qSession);
     h2q = new Http2Quic(qSession);
     h2q.get(request);
+}
+
+if (url.protocol === 'quic:') {
+    doRequest(url.hostname, url.port);
 } else {
     getAltProtocols(target, function (err, protocols) {
         if (err) {
@@ -93,12 +107,6 @@ if (url.protocol === 'quic:') {
         if (!port) {
             throw new Error("The target doesn't support QUIC");
         }
-        qSession = new QuicSession({
-            'host': host,
-            'port': port,
-        });
-        addEventListeners(qSession);
-        h2q = new Http2Quic(qSession);
-        h2q.get(request);
+        doRequest(host, port);
     });
 }

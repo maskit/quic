@@ -1,6 +1,5 @@
 var urlUtil = require('url');
 var QuicSession = require('./lib/QuicSession');
-var QuicStreamFrame = require('./lib/QuicStreamFrame');
 
 var h2q = module.exports = function h2q (qSession) {
     this._qSession = qSession;
